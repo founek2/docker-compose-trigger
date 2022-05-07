@@ -40,6 +40,7 @@ func Index(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 func PullAndRestartService(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	if r.Header.Get("X-API-Key") != os.Getenv("API_KEY") {
 		w.WriteHeader(403)
+		w.Write([]byte("Invalid API_KEY"))
 		return
 	}
 
@@ -66,6 +67,8 @@ func PullAndRestartService(w http.ResponseWriter, r *http.Request, ps httprouter
 		log.Fatal(err)
 	}
 
+	log.Println("Done")
+	w.Write([]byte("Success\n"))
 }
 
 func PullAndRestartApp(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
@@ -80,24 +83,33 @@ func PullAndRestartApp(w http.ResponseWriter, r *http.Request, ps httprouter.Par
 	var service_path = getServicePath(service_name)
 
 	log.Println("Pulling images...")
-	pullImages(service_path)
 
-	log.Printf("Killing app '%s/%s'\n", service_name, app_name)
-
-	cmd := exec.Command("docker-compose", "down", app_name)
+	var cmd = exec.Command("docker-compose", "pull", app_name)
 	cmd.Dir = service_path
 	err := cmd.Run()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	log.Printf("Starting app '%s/%s'\n", service_name, app_name)
-	cmd = exec.Command("docker-compose", "up", app_name)
+	log.Printf("Killing app '%s/%s'\n", service_name, app_name)
+
+	cmd = exec.Command("docker-compose", "down", app_name)
 	cmd.Dir = service_path
 	err = cmd.Run()
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	log.Printf("Starting app '%s/%s'\n", service_name, app_name)
+	cmd = exec.Command("docker-compose", "up", "-d")
+	cmd.Dir = service_path
+	err = cmd.Run()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	log.Println("Done")
+	w.Write([]byte("Success\n"))
 }
 
 func main() {
