@@ -38,12 +38,6 @@ func Index(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 }
 
 func PullAndRestartService(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	if r.Header.Get("X-API-Key") != os.Getenv("API_KEY") {
-		w.WriteHeader(403)
-		w.Write([]byte("Invalid API_KEY"))
-		return
-	}
-
 	var service_name = ps.ByName("service_name")
 	var service_path = getServicePath(service_name)
 
@@ -72,11 +66,6 @@ func PullAndRestartService(w http.ResponseWriter, r *http.Request, ps httprouter
 }
 
 func PullAndRestartApp(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	if r.Header.Get("X-API-Key") != os.Getenv("API_KEY") {
-		w.WriteHeader(403)
-		return
-	}
-
 	var service_name = ps.ByName("service_name")
 	var app_name = ps.ByName("app_name")
 
@@ -112,11 +101,24 @@ func PullAndRestartApp(w http.ResponseWriter, r *http.Request, ps httprouter.Par
 	w.Write([]byte("Success\n"))
 }
 
+func BasicAuth(h httprouter.Handle, apiToken string) httprouter.Handle {
+	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+		// Get the Basic Authentication credentials
+		if r.Header.Get("X-API-Key") != apiToken {
+			w.WriteHeader(403)
+			w.Write([]byte("Invalid API-Key"))
+			return
+		}
+
+		h(w, r, ps)
+	}
+}
+
 func main() {
 	router := httprouter.New()
-	router.GET("/", Index)
-	router.POST("/trigger/:service_name", PullAndRestartService)
-	router.POST("/trigger/:service_name/:app_name", PullAndRestartApp)
+
+	router.POST("/trigger/:service_name", BasicAuth(PullAndRestartService, os.Getenv("API_KEY")))
+	router.POST("/trigger/:service_name/:app_name", BasicAuth(PullAndRestartApp, os.Getenv("API_KEY")))
 
 	var address = os.Getenv("ADDRESS")
 	if address == "" {
