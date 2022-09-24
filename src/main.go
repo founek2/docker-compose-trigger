@@ -29,7 +29,8 @@ func pullImages(service_path string) {
 	cmd.Dir = service_path
 	err := cmd.Run()
 	if err != nil {
-		log.Fatal(err)
+		log.Println("Failed to pull images ", err)
+		return
 	}
 }
 
@@ -44,21 +45,13 @@ func PullAndRestartService(w http.ResponseWriter, r *http.Request, ps httprouter
 	log.Println("Pulling images...")
 	pullImages(service_path)
 
-	log.Printf("Killing service '%s'\n", service_name)
-
-	cmd := exec.Command("docker-compose", "down")
+	log.Printf("Starting service '%s'\n", service_name)
+	cmd := exec.Command("docker-compose", "up", "-d")
 	cmd.Dir = service_path
 	err := cmd.Run()
 	if err != nil {
-		log.Fatal(err)
-	}
-
-	log.Printf("Starting service '%s'\n", service_name)
-	cmd = exec.Command("docker-compose", "up")
-	cmd.Dir = service_path
-	err = cmd.Run()
-	if err != nil {
-		log.Fatal(err)
+		log.Println("Failed to start ", err)
+		return
 	}
 
 	log.Println("Done")
@@ -71,30 +64,23 @@ func PullAndRestartApp(w http.ResponseWriter, r *http.Request, ps httprouter.Par
 
 	var service_path = getServicePath(service_name)
 
-	log.Println("Pulling images...")
+	log.Println("Pulling image...")
 
 	var cmd = exec.Command("docker-compose", "pull", app_name)
 	cmd.Dir = service_path
 	err := cmd.Run()
 	if err != nil {
-		log.Fatal(err)
+		log.Printf("Failed to pull image for app %s %s\n", app_name, err)
+		return
 	}
 
-	log.Printf("Killing app '%s/%s'\n", service_name, app_name)
-
-	cmd = exec.Command("docker-compose", "down", app_name)
-	cmd.Dir = service_path
-	err = cmd.Run()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	log.Printf("Starting app '%s/%s'\n", service_name, app_name)
+	log.Printf("Updating app '%s/%s'\n", service_name, app_name)
 	cmd = exec.Command("docker-compose", "up", "-d")
 	cmd.Dir = service_path
 	err = cmd.Run()
 	if err != nil {
-		log.Fatal(err)
+		log.Println("Failed to start app ", app_name)
+		return
 	}
 
 	log.Println("Done")
