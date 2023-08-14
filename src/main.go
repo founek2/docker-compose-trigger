@@ -25,7 +25,7 @@ func getServicePath(service_name string) string {
 }
 
 func pullImages(service_path string) {
-	var cmd = exec.Command("docker-compose", "pull")
+	var cmd = exec.Command("docker", "compose", "pull")
 	cmd.Dir = service_path
 	err := cmd.Run()
 	if err != nil {
@@ -35,7 +35,7 @@ func pullImages(service_path string) {
 }
 
 func Index(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	fmt.Fprint(w, "Simply docker-compose-trigger API\n")
+	fmt.Fprint(w, "Simply docker compose-trigger API\n")
 }
 
 func PullAndRestartService(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
@@ -46,7 +46,7 @@ func PullAndRestartService(w http.ResponseWriter, r *http.Request, ps httprouter
 	pullImages(service_path)
 
 	log.Printf("Starting service '%s'\n", service_name)
-	cmd := exec.Command("docker-compose", "up", "-d")
+	cmd := exec.Command("docker", "compose", "up", "-d")
 	cmd.Dir = service_path
 	err := cmd.Run()
 	if err != nil {
@@ -66,7 +66,7 @@ func PullAndRestartApp(w http.ResponseWriter, r *http.Request, ps httprouter.Par
 
 	log.Println("Pulling image...")
 
-	var cmd = exec.Command("docker-compose", "pull", app_name)
+	var cmd = exec.Command("docker", "compose", "pull", app_name)
 	cmd.Dir = service_path
 	err := cmd.Run()
 	if err != nil {
@@ -75,7 +75,7 @@ func PullAndRestartApp(w http.ResponseWriter, r *http.Request, ps httprouter.Par
 	}
 
 	log.Printf("Updating app '%s/%s'\n", service_name, app_name)
-	cmd = exec.Command("docker-compose", "up", "-d")
+	cmd = exec.Command("docker", "compose", "up", "-d")
 	cmd.Dir = service_path
 	err = cmd.Run()
 	if err != nil {
