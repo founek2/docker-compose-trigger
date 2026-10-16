@@ -1,0 +1,37 @@
+[Unit]
+Description=HTTP API for triggering Docker Compose deployments
+After=network-online.target docker.service
+Wants=network-online.target
+
+[Service]
+WorkingDirectory=/var/deploy
+ExecStart=/home/martas/go/bin/docker-compose-trigger
+Environment="ADDRESS=:9020"
+EnvironmentFile=/etc/docker-compose-trigger.env
+User=martas
+UMask=0077
+
+Restart=on-failure
+RestartSec=5s
+
+NoNewPrivileges=true
+CapabilityBoundingSet=
+AmbientCapabilities=
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=read-only
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectControlGroups=true
+ProtectHostname=true
+RestrictSUIDSGID=true
+RestrictRealtime=true
+LockPersonality=true
+MemoryDenyWriteExecute=true
+SystemCallArchitectures=native
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+
+[Install]
+WantedBy=multi-user.target
